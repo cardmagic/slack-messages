@@ -174,7 +174,7 @@ export async function buildIndex(
         }
       }
     } catch {
-      // Skip conversations we can't access (e.g., left channels)
+      // Skip conversations we can't access
     }
   }
 

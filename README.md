@@ -38,7 +38,13 @@ npm link
 
 ## Getting a Slack Token
 
-You need a Slack user token (starts with `xoxp-`) with these scopes:
+You need a **User OAuth Token** (starts with `xoxp-`), NOT a Bot token.
+
+> **Important:** Bot tokens (`xoxb-...`) only see the bot's own empty DMs. You must use a User token (`xoxp-...`) to access your messages.
+
+### Required Scopes
+
+Add these under **"User Token Scopes"** (not "Bot Token Scopes"):
 
 | Scope | Purpose |
 |-------|---------|
@@ -65,10 +71,11 @@ You need a Slack user token (starts with `xoxp-`) with these scopes:
    - Select your workspace
    - Click **"Create App"**
 
-3. **Add OAuth scopes**
+3. **Add User Token Scopes** (this is critical!)
    - In the left sidebar, click **"OAuth & Permissions"**
-   - Scroll down to **"User Token Scopes"** (not Bot Token Scopes!)
-   - Click **"Add an OAuth Scope"** and add each of these:
+   - Scroll down to find **"User Token Scopes"**
+   - ⚠️ **NOT "Bot Token Scopes"** - that's a different section!
+   - Click **"Add an OAuth Scope"** and add ALL of these:
      - `channels:history`
      - `channels:read`
      - `groups:history`
@@ -80,19 +87,29 @@ You need a Slack user token (starts with `xoxp-`) with these scopes:
      - `users:read`
 
 4. **Install the app to your workspace**
-   - Scroll up to **"OAuth Tokens for Your Workspace"**
+   - Scroll back up to **"OAuth Tokens for Your Workspace"**
    - Click **"Install to Workspace"**
    - Review the permissions and click **"Allow"**
 
-5. **Copy your token**
-   - After installing, you'll see a **"User OAuth Token"**
-   - It starts with `xoxp-`
-   - Copy this token
+5. **Copy the correct token**
+   - After installing, you'll see TWO tokens on the OAuth page:
+     - ✅ **"User OAuth Token"** - starts with `xoxp-` - **USE THIS ONE**
+     - ❌ "Bot User OAuth Token" - starts with `xoxb-` - don't use this
+   - Copy the `xoxp-` token
 
 6. **Add it to slack-messages**
    ```bash
    slack-messages auth xoxp-your-token-here
    ```
+
+### Verify Your Token
+
+After adding your token, verify it's correct:
+```bash
+slack-messages index
+```
+
+If you see "Messages: 0" but you know you have messages, you likely used a Bot token by mistake. Go back to step 5 and get the User OAuth Token.
 
 ### Security Notes
 

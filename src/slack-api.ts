@@ -66,7 +66,9 @@ export class SlackApi {
         throw new Error('Failed to list conversations')
       }
       for (const channel of result.channels) {
-        if (channel.id) {
+        // Only include channels where user is a member (or DMs which are always accessible)
+        const isMember = channel.is_member || channel.is_im || channel.is_mpim
+        if (channel.id && isMember) {
           conversations.push({
             id: channel.id,
             name: channel.name || channel.id,
@@ -99,20 +101,27 @@ export class SlackApi {
         limit: 200,
         oldest,
       })
-      if (!result.ok || !result.messages) {
+      if (!result.ok || !result.messages || result.messages.length === 0) {
         break
       }
       for (const msg of result.messages) {
-        if (msg.type === 'message' && msg.ts && !msg.subtype) {
-          messages.push({
-            ts: msg.ts,
-            user: msg.user || '',
-            text: msg.text || '',
-            channelId,
-            threadTs: msg.thread_ts,
-            replyCount: msg.reply_count || 0,
-          })
+        // Skip messages without required fields or with system subtypes
+        if (msg.type !== 'message' || !msg.ts || !msg.text || !msg.text.trim()) {
+          continue
         }
+        // Skip system messages like channel_join, channel_leave, etc.
+        const skipSubtypes = ['channel_join', 'channel_leave', 'channel_topic', 'channel_purpose', 'bot_add', 'bot_remove']
+        if (msg.subtype && skipSubtypes.includes(msg.subtype)) {
+          continue
+        }
+        messages.push({
+          ts: msg.ts,
+          user: msg.user || '',
+          text: msg.text,
+          channelId,
+          threadTs: msg.thread_ts,
+          replyCount: msg.reply_count || 0,
+        })
       }
       onProgress?.(messages.length)
       cursor = result.response_metadata?.next_cursor
