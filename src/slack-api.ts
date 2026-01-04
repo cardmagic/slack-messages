@@ -1,20 +1,40 @@
 import { WebClient } from '@slack/web-api'
 import type { SlackConversation, SlackMessage, SlackUser } from './types.js'
 
+// Delay helper for rate limiting
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+// Slack Tier 3 allows ~50 requests/minute. Use 1200ms to stay safely under.
+const DEFAULT_DELAY_MS = 1200
+
 export class SlackApi {
   private client: WebClient
+  private lastRequestTime = 0
+  private delayMs: number
 
-  constructor(token: string) {
+  constructor(token: string, delayMs = DEFAULT_DELAY_MS) {
+    this.delayMs = delayMs
     this.client = new WebClient(token, {
       retryConfig: {
-        retries: 3,
+        retries: 10,
         factor: 2,
         randomize: true,
       },
     })
   }
 
+  // Ensure minimum delay between API calls
+  private async rateLimit(): Promise<void> {
+    const now = Date.now()
+    const elapsed = now - this.lastRequestTime
+    if (elapsed < this.delayMs) {
+      await delay(this.delayMs - elapsed)
+    }
+    this.lastRequestTime = Date.now()
+  }
+
   async testAuth(): Promise<{ userId: string; teamId: string; teamName: string }> {
+    await this.rateLimit()
     const result = await this.client.auth.test()
     if (!result.ok) {
       throw new Error('Authentication failed')
@@ -31,6 +51,7 @@ export class SlackApi {
     let cursor: string | undefined
 
     do {
+      await this.rateLimit()
       const result = await this.client.users.list({ cursor, limit: 200 })
       if (!result.ok || !result.members) {
         throw new Error('Failed to list users')
@@ -56,6 +77,7 @@ export class SlackApi {
     let cursor: string | undefined
 
     do {
+      await this.rateLimit()
       const result = await this.client.conversations.list({
         cursor,
         limit: 200,
@@ -95,6 +117,7 @@ export class SlackApi {
     let cursor: string | undefined
 
     do {
+      await this.rateLimit()
       const result = await this.client.conversations.history({
         channel: channelId,
         cursor,
@@ -135,6 +158,7 @@ export class SlackApi {
     let cursor: string | undefined
 
     do {
+      await this.rateLimit()
       const result = await this.client.conversations.replies({
         channel: channelId,
         ts: threadTs,
