@@ -91,9 +91,11 @@ export function runCli(): void {
     .option('-u, --update', 'Incremental update (only index new messages)')
     .action(async (options) => {
       const isIncremental = options.update
-      console.log(chalk.bold(isIncremental ? 'Updating search index...' : 'Rebuilding search index...'))
-      console.log(chalk.dim('Fetching messages from Slack API'))
-      console.log()
+      const log = options.quiet ? () => {} : console.log.bind(console)
+
+      log(chalk.bold(isIncremental ? 'Updating search index...' : 'Rebuilding search index...'))
+      log(chalk.dim('Fetching messages from Slack API'))
+      log()
 
       try {
         const progressCallback = (progress: { phase: string; current: number; total: number; detail?: string }) => {
@@ -112,18 +114,18 @@ export function runCli(): void {
         if (isIncremental) {
           stats = await updateIndex(progressCallback)
           if (!stats) {
-            console.log(chalk.yellow('\nNo existing index found, performing full rebuild...'))
-            console.log()
+            log(chalk.yellow('\nNo existing index found, performing full rebuild...'))
+            log()
             stats = await buildIndex(progressCallback)
           }
         } else {
           stats = await buildIndex(progressCallback)
         }
 
-        console.log()
-        console.log(chalk.green(isIncremental ? '\u2713 Index updated successfully!' : '\u2713 Index rebuilt successfully!'))
-        console.log()
-        console.log(formatStats(stats))
+        log()
+        log(chalk.green(isIncremental ? '\u2713 Index updated successfully!' : '\u2713 Index rebuilt successfully!'))
+        log()
+        log(formatStats(stats))
       } catch (error) {
         console.error(chalk.red('\nError building index:'), (error as Error).message)
         process.exit(1)
