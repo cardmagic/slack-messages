@@ -1,4 +1,5 @@
 import { createRequire } from 'module'
+import { createInterface } from 'readline'
 import { program } from 'commander'
 import chalk from 'chalk'
 import { buildIndex, updateIndex, getStats } from './indexer.js'
@@ -23,6 +24,44 @@ import {
 } from './formatter.js'
 import type { SearchOptions } from './types.js'
 
+function promptPassword(prompt: string): Promise<string> {
+  return new Promise((resolve) => {
+    const rl = createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    })
+
+    process.stdout.write(prompt)
+
+    if (process.stdin.isTTY) {
+      process.stdin.setRawMode(true)
+    }
+
+    let input = ''
+    const onData = (char: Buffer) => {
+      const c = char.toString()
+      if (c === '\n' || c === '\r') {
+        if (process.stdin.isTTY) {
+          process.stdin.setRawMode(false)
+        }
+        process.stdin.removeListener('data', onData)
+        rl.close()
+        console.log()
+        resolve(input)
+      } else if (c === '\u0003') {
+        process.exit(0)
+      } else if (c === '\u007F' || c === '\b') {
+        input = input.slice(0, -1)
+      } else {
+        input += c
+      }
+    }
+
+    process.stdin.on('data', onData)
+    process.stdin.resume()
+  })
+}
+
 export function runCli(): void {
   program
     .name('slack-messages')
@@ -30,21 +69,28 @@ export function runCli(): void {
     .version(version)
 
   program
-    .command('auth <token>')
+    .command('auth')
     .description('Add a Slack workspace using a user token (xoxp-...)')
-    .action(async (token) => {
+    .action(async () => {
       try {
+        const token = await promptPassword(chalk.bold('Slack token: '))
+
+        if (!token.trim()) {
+          console.error(chalk.red('Token cannot be empty'))
+          process.exit(1)
+        }
+
         console.log(chalk.dim('Verifying token...'))
-        const api = new SlackApi(token)
+        const api = new SlackApi(token.trim())
         const info = await api.testAuth()
 
         addWorkspace({
           id: info.teamId,
           name: info.teamName,
-          token,
+          token: token.trim(),
         })
 
-        console.log(chalk.green(`\u2713 Added workspace: ${info.teamName}`))
+        console.log(chalk.green(`✓ Added workspace: ${info.teamName}`))
         console.log(chalk.dim(`Workspace ID: ${info.teamId}`))
         console.log()
         console.log(chalk.dim('Run `slack-messages index` to build the search index.'))
@@ -62,7 +108,7 @@ export function runCli(): void {
 
       if (workspaces.length === 0) {
         console.log(chalk.yellow('No workspaces configured.'))
-        console.log(chalk.dim('Run `slack-messages auth <token>` to add one.'))
+        console.log(chalk.dim('Run `slack-messages auth` to add one.'))
         return
       }
 

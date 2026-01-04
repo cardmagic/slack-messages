@@ -88,7 +88,7 @@ export async function buildIndex(
   const workspace = getDefaultWorkspace()
   if (!workspace) {
     throw new Error(
-      'No Slack workspace configured. Run `slack-messages auth <token>` to add one.'
+      'No Slack workspace configured. Run `slack-messages auth` to add one.'
     )
   }
 

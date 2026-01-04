@@ -99,7 +99,8 @@ Add these under **"User Token Scopes"** (not "Bot Token Scopes"):
 
 6. **Add it to slack-messages**
    ```bash
-   slack-messages auth xoxp-your-token-here
+   slack-messages auth
+   # Paste your token when prompted (input is hidden)
    ```
 
 ### Verify Your Token
@@ -122,8 +123,8 @@ If you see "Messages: 0" but you know you have messages, you likely used a Bot t
 ### Initial Setup
 
 ```bash
-# Add your Slack workspace
-slack-messages auth xoxp-your-token-here
+# Add your Slack workspace (token is prompted securely)
+slack-messages auth
 
 # Build the search index (fetches all messages)
 slack-messages index

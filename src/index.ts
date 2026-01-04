@@ -2,7 +2,7 @@
 
 // Dual-mode entry point: CLI or MCP server
 // Usage:
-//   slack-messages auth <token>  - Add Slack workspace
+//   slack-messages auth          - Add Slack workspace (prompts for token)
 //   slack-messages index         - Build search index
 //   slack-messages search "query"- Search messages
 //   slack-messages --mcp         - MCP server mode (for Claude Code integration)
