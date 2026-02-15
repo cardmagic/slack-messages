@@ -54,7 +54,7 @@
     "minisearch": "7.2.0"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "7.6.12",
+    "@types/better-sqlite3": "7.6.13",
     "@types/node": "^25",
     "oxlint": "^1.43.0",
     "typescript": "^5.7.0",
