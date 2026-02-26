@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.3",
-    "@slack/web-api": "^7.8.0",
+    "@slack/web-api": "^7.14.1",
     "better-sqlite3": "12.6.2",
     "chalk": "5.6.2",
     "commander": "14.0.2",
